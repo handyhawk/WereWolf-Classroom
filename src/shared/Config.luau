@@ -24,7 +24,8 @@ local Config = {
 		LobbyTime = 40,
 		IntroTime = 5,
 		RoundTime = 240,
-		LastManStandingTime = 90,
+		LastManStandingTime = 75,
+		SpecialLastManStandingTime = 90
 	},
 
 	Debug = {
