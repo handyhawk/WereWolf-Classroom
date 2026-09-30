@@ -11,8 +11,9 @@
 	             - the timer runs out            -> Survivors win
 	             - every survivor is dead        -> Killer wins
 	             - every killer is dead or left  -> Survivors win
-	  LMS      When one survivor is left (and the round started with 2+),
-	           the timer is reset to LastManStandingTime.
+	  LMS      When only one survivor is left, the timer is reset to
+	           LastManStandingTime. In a 1v1 this starts as soon as the
+	           round begins.
 	  ENDED    Announce the winner, wait EndTime, send everyone back to the
 	           lobby, delete the map. Then the loop starts again.
 
@@ -44,18 +45,10 @@ type Match = {
 	killers: { [Player]: true }, -- killers still alive
 	survivors: { [Player]: true }, -- survivors still alive
 	hadKillers: boolean, -- false only when testing alone
-	startingSurvivors: number,
 	inLastManStanding: boolean,
 	winner: Winner?, -- set the moment someone wins; the round loop sees it and stops
 	deadline: number, -- os.clock() time when the round timer hits 0
 	connections: { RBXScriptConnection },
-}
-
--- TEMPORARY: colours so you can see who's who while testing.
--- Removed once characters have real models (step 3).
-local ROLE_COLORS: { [Role]: Color3 } = {
-	Killer = Color3.fromRGB(220, 40, 40),
-	Survivor = Color3.fromRGB(60, 140, 255),
 }
 
 local random = Random.new()
@@ -161,7 +154,6 @@ function RoundService:_runMatch()
 		killers = {},
 		survivors = {},
 		hadKillers = killerCount > 0,
-		startingSurvivors = #players - killerCount,
 		inLastManStanding = false,
 		winner = nil,
 		deadline = 0,
@@ -218,7 +210,9 @@ function RoundService:_runMatch()
 	-- 4. The round itself.
 	self:_setState(RoundState.InRound)
 	match.deadline = os.clock() + Config.Round.RoundTime
-	self:_checkWinConditions(match) -- someone may have left during the intro
+	-- Check straight away: someone may have left during the intro, and in a
+	-- 1v1 there's already only one survivor, so LMS starts right now.
+	self:_checkWinConditions(match)
 
 	-- We check 10 times a second so a win ends the round almost instantly.
 	-- LMS can move the deadline, which is why we re-read it every loop.
@@ -293,14 +287,6 @@ function RoundService:_spawnPlayer(match: Match, player: Player, role: Role, spa
 	character:PivotTo(spawnCFrame + Vector3.new(0, 3, 0))
 	root.Anchored = true
 
-	-- TEMPORARY role colour.
-	local highlight = Instance.new("Highlight")
-	highlight.FillColor = ROLE_COLORS[role]
-	highlight.FillTransparency = 0.5
-	highlight.OutlineTransparency = 1
-	highlight.DepthMode = Enum.HighlightDepthMode.Occluded -- not visible through walls
-	highlight.Parent = character
-
 	table.insert(
 		match.connections,
 		humanoid.Died:Connect(function()
@@ -354,7 +340,6 @@ function RoundService:_checkWinConditions(match: Match)
 	elseif
 		survivorsLeft == 1
 		and match.hadKillers
-		and match.startingSurvivors >= 2
 		and not match.inLastManStanding
 		and self.state == RoundState.InRound
 	then
