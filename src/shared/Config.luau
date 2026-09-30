@@ -21,7 +21,7 @@ local Config = {
 		KillerCount = 1,
 
 		-- Times are in seconds.
-		LobbyTime = 30,
+		LobbyTime = 40,
 		IntroTime = 5,
 		RoundTime = 240,
 		LastManStandingTime = 90,
