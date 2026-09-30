@@ -25,7 +25,11 @@ local Config = {
 		IntroTime = 5,
 		RoundTime = 240,
 		LastManStandingTime = 75,
-		SpecialLastManStandingTime = 90
+		-- Used instead of LastManStandingTime for special killer-vs-survivor
+		-- matchups. Hooked up once characters exist (step 3).
+		SpecialLastManStandingTime = 90,
+		-- How long the "Survivors win!" screen stays before going back to lobby.
+		EndTime = 5,
 	},
 
 	Debug = {
